@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SourceGenerator\SourceGenerator.csproj" />
+    <ProjectReference Include="..\TextDispatcher\TextDispatcher.csproj" />
   </ItemGroup>
 
 </Project>
