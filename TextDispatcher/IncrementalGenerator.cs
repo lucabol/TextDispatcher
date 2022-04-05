@@ -120,9 +120,10 @@ namespace TextDispatcher
                     using(var fnScope = clScope.NewScope("public void Dispatch(string methodName)")) {
                         using (var swScope = fnScope.NewScope("switch(methodName)")) {
 
-                            foreach (var method in s.GetMembers().OfType<IMethodSymbol>()) {
+                            foreach (var method in s.GetMembers().OfType<IMethodSymbol>())
+                            {
                                 var methodName = method.Name;
-                                if(SyntaxFacts.IsValidIdentifier(methodName) && method.Parameters.Length == 0)
+                                if (IsValidMethod(method, methodName))
                                     swScope.Text($"case \"{methodName}\": {methodName}(); break;");
                             }
                             swScope.Text($"default: throw new System.ArgumentException(\"method doesn't exist on class.\");");
@@ -132,6 +133,8 @@ namespace TextDispatcher
             }
         }
 
+        private static bool IsValidMethod(IMethodSymbol method, string methodName) =>
+            SyntaxFacts.IsValidIdentifier(methodName) && method.Parameters.Length == 0 && method.ReturnsVoid;
     }
 }
 
