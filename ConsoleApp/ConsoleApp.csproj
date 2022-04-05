@@ -1,7 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\TextDispatcher\TextDispatcher.csproj" />
+    <ProjectReference
+		Include="..\TextDispatcher\TextDispatcher.csproj"
+        OutputItemType="Analyzer"
+		ReferenceOutputAssembly="false"
+		/>
   </ItemGroup>
 
   <PropertyGroup>

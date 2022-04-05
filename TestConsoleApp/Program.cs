@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using SourceGenerator;
+using TextDispatcherGenerator;
 
 namespace TestConsoleApp
 {
@@ -14,13 +14,14 @@ namespace TestConsoleApp
         static void Main(string[] args)
         {
             string source = @"
+using TextDispatcher;
 namespace Foo
 {
-    class C
+    [Dispatcher]
+    partial class C
     {
-        void M()
-        {
-        }
+        void M() { }
+        void N() { }
     }
 }";
 
@@ -65,7 +66,7 @@ namespace Foo
             //     return (diagnostics, "");
             // }
 
-            var generator = new Generator();
+            var generator = new IncrementalGenerator();
 
             var driver = CSharpGeneratorDriver.Create(generator);
             driver.RunGeneratorsAndUpdateCompilation(compilation, out var outputCompilation, out var generateDiagnostics);
