@@ -1,13 +1,13 @@
 ﻿using System;
 using TextDispatcher;
 
-namespace Foo
+namespace Tests
 {
     [Dispatcher]
     public partial class C
     {
         [NoDispatch]
-        static void Main()
+        public static void MainTest()
         {
             var c = new C();
             c.Dispatch("M");

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -26,10 +27,16 @@ namespace TextDispatcher
     public class NoDispatchAttribute : System.Attribute
     {
     }
+    [System.AttributeUsage(System.AttributeTargets.Method)]
+    public class SymbolAttribute : System.Attribute
+    {
+        string _symbol;
+        public SymbolAttribute(string symbol) => this._symbol = symbol;
+    }
 }";
 		public void Initialize(IncrementalGeneratorInitializationContext context)
 		{
-           // Add the marker attribute to the compilation
+           // Add the marker attribute to the compilation.
             context.RegisterPostInitializationOutput(ctx => ctx.AddSource(
                 "DispatcherAttribute.g.cs", 
                 SourceText.From(DispatcherAttribute, Encoding.UTF8))); 
@@ -120,22 +127,17 @@ namespace TextDispatcher
         private void GenerateSymbol(StringBuilder sb, ITypeSymbol s)
         {
             // namespace -> partial class -> function -> switch statement
-            using var nsScope = new Scope(sb, $"namespace {s.ContainingSymbol.Name}"); 
-            using var clScope = nsScope.NewScope( $"{s.DeclaredAccessibility.ToString().ToLowerInvariant()} partial class {s.Name}");
+            using var nsScope = new Scope(sb, $"namespace {s.ContainingNamespace.Name}"); 
+            using var clScope = nsScope.NewScope($"{s.DeclaredAccessibility.ToString().ToLowerInvariant()} partial class {s.Name}");
             using var fnScope = clScope.NewScope("public void Dispatch(string arg)");
             using var swScope = fnScope.NewScope("switch(arg)");
 
             // Get all the methods.
             var methods = s.GetMembers().OfType<IMethodSymbol>();
 
-            foreach(var m in methods) {
-                foreach(var a in m.GetAttributes())
-                    swScope.Text($"// {a} {a.AttributeClass.Name}");
-            }
-
             // Add a case statement for each void returning and void taking method.
             foreach (var method in methods.Where(m => IsVoidTakingVoid(m, m.Name)))
-                swScope.Text($"case \"{method.Name}\": {method.Name}(); break;");
+                swScope.Text($"case \"{Symbol(method)}\": {method.Name}(); break;");
 
             // In the default: case, process other special methods on the class
             using var dfScope = swScope.NewScope("default:");
@@ -149,9 +151,17 @@ namespace TextDispatcher
                dfScope.Text("\nParseString(arg);\nreturn;"); 
 
             // If everything fails, raise an exception.
-            dfScope.Text($"throw new System.ArgumentException(\"Method {{arg}} doesn't exist on this class.\");");
+            dfScope.Text($"throw new System.ArgumentException($\"Method '{{arg}}' doesn't exist on this class.\");");
         }
 
+        private static string Symbol(IMethodSymbol m)
+        {
+            var attrs = m.GetAttributes().Where(a => a.AttributeClass.Name == "SymbolAttribute");
+            if(attrs.Count() == 0)
+                return m.Name;
+            else
+                return (string)attrs.First().ConstructorArguments[0].Value;
+        }
         private static bool IsVoidTakingVoid(IMethodSymbol method, string methodName) =>
             SyntaxFacts.IsValidIdentifier(methodName) &&
             method.Parameters.Length == 0 &&
