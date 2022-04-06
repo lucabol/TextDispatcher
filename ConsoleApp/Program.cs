@@ -6,6 +6,7 @@ namespace Foo
     [Dispatcher]
     public partial class C
     {
+        [NoDispatch]
         static void Main()
         {
             var c = new C();
@@ -25,7 +26,6 @@ namespace Foo
             try { new D().Dispatch("K2");} catch(Exception) { Console.WriteLine("OK not dispatching to not void returning methods.");}
         }
 
-        [NoDispatch]
         void M() => Console.WriteLine("OK calling an instance method.");
         void N() => Console.WriteLine("OK calling another instance method.");
         static void S() => Console.WriteLine("OK calling static methods.");

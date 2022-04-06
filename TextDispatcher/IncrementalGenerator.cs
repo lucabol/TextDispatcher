@@ -130,7 +130,7 @@ namespace TextDispatcher
 
             foreach(var m in methods) {
                 foreach(var a in m.GetAttributes())
-                    Console.WriteLine($"// {a.ToString()} {a.AttributeClass.Name}");
+                    swScope.Text($"// {a} {a.AttributeClass.Name}");
             }
 
             // Add a case statement for each void returning and void taking method.
@@ -156,7 +156,7 @@ namespace TextDispatcher
             SyntaxFacts.IsValidIdentifier(methodName) &&
             method.Parameters.Length == 0 &&
             method.ReturnsVoid &&
-            !method.GetAttributes().Any(a => a.AttributeConstructor?.Name == "TextDispatcher.NoDispatch");
+            !method.GetAttributes().Any(a => a.ToString() == "TextDispatcher.NoDispatchAttribute");
     }
 }
 
