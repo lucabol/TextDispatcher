@@ -22,6 +22,8 @@ namespace Foo
     {
         void M() { }
         void N() { }
+        void ParseInt(int i) {}
+        void ParseString(string s) {}
     }
 }";
 

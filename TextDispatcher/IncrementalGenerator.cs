@@ -22,6 +22,10 @@ namespace TextDispatcher
     public class DispatcherAttribute : System.Attribute
     {
     }
+    [System.AttributeUsage(System.AttributeTargets.Method)]
+    public class NoDispatchAttribute : System.Attribute
+    {
+    }
 }";
 		public void Initialize(IncrementalGeneratorInitializationContext context)
 		{
@@ -115,26 +119,44 @@ namespace TextDispatcher
 
         private void GenerateSymbol(StringBuilder sb, ITypeSymbol s)
         {
-            using (var nsScope = new Scope(sb, $"namespace {s.ContainingSymbol.Name}")) {
-                using (var clScope = nsScope.NewScope( $"{s.DeclaredAccessibility.ToString().ToLowerInvariant()} partial class {s.Name}")) {
-                    using(var fnScope = clScope.NewScope("public void Dispatch(string methodName)")) {
-                        using (var swScope = fnScope.NewScope("switch(methodName)")) {
+            // namespace -> partial class -> function -> switch statement
+            using var nsScope = new Scope(sb, $"namespace {s.ContainingSymbol.Name}"); 
+            using var clScope = nsScope.NewScope( $"{s.DeclaredAccessibility.ToString().ToLowerInvariant()} partial class {s.Name}");
+            using var fnScope = clScope.NewScope("public void Dispatch(string arg)");
+            using var swScope = fnScope.NewScope("switch(arg)");
 
-                            foreach (var method in s.GetMembers().OfType<IMethodSymbol>())
-                            {
-                                var methodName = method.Name;
-                                if (IsValidMethod(method, methodName))
-                                    swScope.Text($"case \"{methodName}\": {methodName}(); break;");
-                            }
-                            swScope.Text($"default: throw new System.ArgumentException(\"method doesn't exist on class.\");");
-                        }
-                    }
-                }
+            // Get all the methods.
+            var methods = s.GetMembers().OfType<IMethodSymbol>();
+
+            foreach(var m in methods) {
+                foreach(var a in m.GetAttributes())
+                    Console.WriteLine($"// {a.ToString()} {a.AttributeClass.Name}");
             }
+
+            // Add a case statement for each void returning and void taking method.
+            foreach (var method in methods.Where(m => IsVoidTakingVoid(m, m.Name)))
+                swScope.Text($"case \"{method.Name}\": {method.Name}(); break;");
+
+            // In the default: case, process other special methods on the class
+            using var dfScope = swScope.NewScope("default:");
+
+            // First, maybe the arg to dispatch is an integer and we have a method for it.
+            foreach (var method in methods.Where(m => m.Name == "ParseInt"))
+               dfScope.Text("if(System.Int32.TryParse(arg, out var v)) { ParseInt(v);return;}"); 
+
+            // Second, we might want to call a default method in case nothing matches.
+            foreach (var method in methods.Where(m => m.Name == "ParseString"))
+               dfScope.Text("\nParseString(arg);\nreturn;"); 
+
+            // If everything fails, raise an exception.
+            dfScope.Text($"throw new System.ArgumentException(\"Method {{arg}} doesn't exist on this class.\");");
         }
 
-        private static bool IsValidMethod(IMethodSymbol method, string methodName) =>
-            SyntaxFacts.IsValidIdentifier(methodName) && method.Parameters.Length == 0 && method.ReturnsVoid;
+        private static bool IsVoidTakingVoid(IMethodSymbol method, string methodName) =>
+            SyntaxFacts.IsValidIdentifier(methodName) &&
+            method.Parameters.Length == 0 &&
+            method.ReturnsVoid &&
+            !method.GetAttributes().Any(a => a.AttributeConstructor?.Name == "TextDispatcher.NoDispatch");
     }
 }
 
