@@ -6,6 +6,6 @@ class Program
     static void Main() {
         C.MainTest();
         DirectForth.MainTest();
-        BrainF.BrainF.HelloTest();
+        BrainF.BrainF.BrainFTest();
     }
 }

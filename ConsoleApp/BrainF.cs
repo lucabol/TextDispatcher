@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using TextDispatcher;
 using static System.Console;
@@ -11,35 +12,96 @@ partial class BrainF
     const int limit = 30_000;
 
     byte[] data = new byte[limit];
-    int pointer = 0;
+    int dptr = 0;
+
+    char[] code;
+    int cptr = 0;
+
+    int bracketCount = 0;
 
     void ParseString(string s) { }
 
-    [Symbol(">")] void incPtr() => pointer += 1;
-    [Symbol("<")] void decPtr() => pointer -= 1;
-    [Symbol("+")] void inc()    => data[pointer] += 1;
-    [Symbol("-")] void dec()    => data[pointer] -= 1;
-    [Symbol(".")] void print()  => Write((byte)data[pointer]);
-    [Symbol(",")] void input()  => data[pointer] = (byte)Read();
+    [Symbol(">")] void incPtr() => dptr += 1;
+    [Symbol("<")] void decPtr() => dptr -= 1;
+    [Symbol("+")] void inc()    => data[dptr] += 1;
+    [Symbol("-")] void dec()    => data[dptr] -= 1;
+    [Symbol(".")] void print()  => Write((char)data[dptr]);
+    [Symbol(",")] void input()  => data[dptr] = (byte)Read();
     [Symbol("[")] void jmpFwd()
     {
-        if(data[pointer] != 0) { pointer += 1; return;}
-        while(data[pointer] != ']') pointer += 1;
-        pointer += 1;
+        if(data[dptr] != 0) { return;}
+        while(true)
+        {
+            Debug.Assert(bracketCount >= 0);
+
+            cptr += 1;
+            var c = code[cptr];
+            if(c == ']' && bracketCount == 0) break;
+            if(c == ']' && bracketCount != 0) bracketCount -= 1;
+            if(c == '[')                      bracketCount += 1;
+        }
     } 
     [Symbol("]")] void jmpBkw()
     {
-        if(data[pointer] == 0) { pointer += 1; return;}
-        while(data[pointer] != '[') pointer -= 1;
-        pointer += 1;
+        if(data[dptr] == 0) { return;}
+        while(true)
+        {
+            Debug.Assert(bracketCount >= 0);
+
+            cptr -= 1;
+            var c = code[cptr];
+            if(c == '[' && bracketCount == 0) break;
+            if(c == '[' && bracketCount != 0) bracketCount -= 1;
+            if(c == ']')                      bracketCount += 1;
+        }
     } 
 
     [NoDispatch]
-    void Execute(string code) => code.ToList().ForEach(c => Dispatch(c.ToString()));
+    void Clear()
+    {
+        Array.Clear(data);
+        dptr = 0;
+        code = null;
+        cptr = 0;
+    }
+    [NoDispatch]
+    void SetCode(string code) => this.code = code.ToCharArray();
 
     [NoDispatch]
-    internal static void HelloTest()
+    void Execute()
     {
+        if(cptr == code.Length) return;
+        //Write(code[cptr]);
+        Dispatch(code[cptr].ToString());
+        cptr += 1;
+        Execute();
+    }
+
+    [NoDispatch]
+    internal static void BrainFTest()
+    {
+        const string adder = @"
+++       Cell c0 = 2
+> +++++  Cell c1 = 5
+
+[        Start your loops with your cell pointer on the loop counter (c1 in our case)
+< +      Add 1 to c0
+> -      Subtract 1 from c1
+]        End your loops with the cell pointer on the loop counter
+
+At this point our program has added 5 to 2 leaving 7 in c0 and 0 in c1
+but we cannot output this value to the terminal since it is not ASCII encoded.
+
+To display the ASCII character ""7"" we must add 48 to the value 7.
+We use a loop to compute 48 = 6 * 8.
+
+++++ ++++  c1 = 8 and this will be our loop counter again
+[
+< +++ +++  Add 6 to c0
+> -        Subtract 1 from c1
+]
+< .        Print out c0 which has the value 55 which translates to ""7""!
+";
         const string hello = @"
 [ This program prints ""Hello World!"" and a newline to the screen, its
   length is 106 active command characters. [It is not the shortest.]
@@ -85,7 +147,16 @@ Pointer :   ^
 >>+.                    Add 1 to Cell #5 gives us an exclamation point
 >++.                    And finally a newline from Cell #6
 ";
-        new BrainF().Execute(hello);
+        BrainF bf = new();
+        bf.SetCode(adder);
+        bf.Execute();
+        WriteLine(" = 7");
+
+        bf.Clear();
+        bf.SetCode(hello);
+        bf.Execute();
+        Console.SetCursorPosition(13, Console.CursorTop -1);
+        WriteLine("= Hello World!");
     }
 
 }
