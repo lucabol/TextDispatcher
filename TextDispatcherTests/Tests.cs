@@ -58,7 +58,7 @@ namespace Foo
 
             var compilation = CSharpCompilation.Create("foo", new SyntaxTree[] { syntaxTree }, references, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
-            IIncrementalGenerator generator = new IncrementalGenerator();
+            IIncrementalGenerator generator = new TextDispatcher();
 
             var driver = CSharpGeneratorDriver.Create(generator);
             driver.RunGeneratorsAndUpdateCompilation(compilation, out var outputCompilation, out var generateDiagnostics);

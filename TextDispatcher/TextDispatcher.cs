@@ -14,7 +14,7 @@ using Microsoft.CodeAnalysis.Text;
 namespace TextDispatcherGenerator
 {
     [Generator]
-	public class IncrementalGenerator : IIncrementalGenerator
+	public class TextDispatcher : IIncrementalGenerator
 	{
             public const string DispatcherAttribute = @"
 namespace TextDispatcher

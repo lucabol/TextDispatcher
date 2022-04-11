@@ -68,7 +68,7 @@ namespace Foo
             //     return (diagnostics, "");
             // }
 
-            var generator = new IncrementalGenerator();
+            var generator = new TextDispatcher();
 
             var driver = CSharpGeneratorDriver.Create(generator);
             driver.RunGeneratorsAndUpdateCompilation(compilation, out var outputCompilation, out var generateDiagnostics);
