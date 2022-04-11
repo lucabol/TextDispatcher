@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Linq;
 using TextDispatcher;
 using static System.Console;
 
@@ -29,7 +28,8 @@ partial class BrainF
     [Symbol(",")] void input()  => data[dptr] = (byte)Read();
     [Symbol("[")] void jmpFwd()
     {
-        if(data[dptr] != 0) { return;}
+        if(data[dptr] != 0) return;
+
         while(true)
         {
             Debug.Assert(bracketCount >= 0);
@@ -43,7 +43,8 @@ partial class BrainF
     } 
     [Symbol("]")] void jmpBkw()
     {
-        if(data[dptr] == 0) { return;}
+        if(data[dptr] == 0) return;
+
         while(true)
         {
             Debug.Assert(bracketCount >= 0);
@@ -71,7 +72,6 @@ partial class BrainF
     void Execute()
     {
         if(cptr == code.Length) return;
-        //Write(code[cptr]);
         Dispatch(code[cptr].ToString());
         cptr += 1;
         Execute();
@@ -155,7 +155,7 @@ Pointer :   ^
         bf.Clear();
         bf.SetCode(hello);
         bf.Execute();
-        Console.SetCursorPosition(13, Console.CursorTop -1);
+        SetCursorPosition(13, Console.CursorTop -1);
         WriteLine("= Hello World!");
     }
 
