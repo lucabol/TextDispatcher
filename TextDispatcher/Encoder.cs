@@ -79,14 +79,18 @@ namespace TextDispatcher
         var methods = s.GetMembers().OfType<IMethodSymbol>();
         var enumName = $"{s.Name}Token";
 
-        // Create an enum to capture all methods on the object.
-        using var enumScope = nsScope.NewScope($"public enum {enumName}");
+        {
+            // Create an enum to capture all methods on the object.
+            using var enumScope = nsScope.NewScope($"public enum {enumName}");
 
-        // Add an enum case for each public method.
-        foreach (var method in methods.Where(m => m.IsVoidTakingVoid(m.Name)))
-            enumScope.Text($"{method.Name},");
+            // Add an enum case for each public method.
+            foreach (var method in methods.Where(m => m.IsVoidTakingVoid(m.Name)))
+                enumScope.Text($"{method.Name},");
+        }
 
-        using var clScope = nsScope.NewScope($"{s.DeclaredAccessibility.ToString().ToLowerInvariant()} partial class {s.Name}");
+        using var clScope = nsScope.NewScope(
+            $"{s.DeclaredAccessibility.ToString().ToLowerInvariant()} partial class {s.Name}");
+
         clScope.GenerateFunction(
             methods,
             $"public {enumName} Encode(string arg)",

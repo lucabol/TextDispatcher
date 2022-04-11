@@ -1,6 +1,4 @@
-﻿using System.Collections;
-
-namespace TextDispatcherGenerator;
+﻿namespace TextDispatcherGenerator;
 
 [Generator]
 	public class TextDispatcher : IIncrementalGenerator
