@@ -5,7 +5,7 @@ class Program
 {
     static void Main() {
         C.MainTest();
-        DirectForth.MainTest();
         BrainF.BrainF.BrainFTest();
+        DirectForth.MainTest();
     }
 }

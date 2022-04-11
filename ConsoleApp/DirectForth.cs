@@ -5,7 +5,7 @@ using static System.Console;
 
 namespace Forth;
 
-[Dispatcher]
+[Dispatcher][Encoder]
 partial class DirectForth
 {
     Stack<int> stack = new ();
@@ -28,6 +28,14 @@ partial class DirectForth
     void ExecLine(string line) => line.Split(null).ToList().ForEach(Dispatch);
 
     [NoDispatch]
+    IEnumerable<DirectForthToken> EncodeLine(string line)
+        => line.Split(null).Select(Encode);
+
+    [NoDispatch]
+    string DecodeTokens(IEnumerable<DirectForthToken> tokens)
+        => System.String.Join(" ", tokens.Select(Decode));
+
+    [NoDispatch]
     internal static void MainTest()
     {
         DirectForth f = new();
@@ -39,5 +47,11 @@ partial class DirectForth
         Assert("30", "drop 30 60 swap - .");
         Assert("1", "2 3 % .");
         Assert("0", "deep .");
+
+        f.ExecLine("50");
+        var encoded = f.EncodeLine("dup . .");
+        var decoded = f.DecodeTokens(encoded);
+        f.ExecLine(decoded);
+        WriteLine("== 50 50");
     }
 }
