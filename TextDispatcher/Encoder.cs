@@ -20,7 +20,7 @@ namespace TextDispatcher
 
         var classDeclarations = context.SyntaxProvider.CreateSyntaxProvider(
            predicate: (s, t) => s is ClassDeclarationSyntax cl && cl.AttributeLists.Count > 0,
-           transform: Globals.ClassByAttributeFunc("TextDispatcher.EncoderAttribute")).Collect();
+           transform: ClassByAttributeFunc("TextDispatcher.EncoderAttribute")).Collect();
         
         context.RegisterSourceOutput(classDeclarations, GenerateSource);
     }
