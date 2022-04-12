@@ -20,7 +20,7 @@ namespace TextDispatcher
 
         var classDeclarations = context.SyntaxProvider.CreateSyntaxProvider(
            predicate: (s, t) => s is ClassDeclarationSyntax cl && cl.AttributeLists.Count > 0,
-           transform: GetTypeSymbols).Collect();
+           transform: Globals.ClassByAttributeFunc("TextDispatcher.EncoderAttribute")).Collect();
         
         context.RegisterSourceOutput(classDeclarations, GenerateSource);
     }
@@ -39,37 +39,6 @@ namespace TextDispatcher
             sb.Clear();
         }
 
-    }
-
-    private ITypeSymbol GetTypeSymbols(GeneratorSyntaxContext context, CancellationToken cancellationToken)
-    {
-        var decl = (ClassDeclarationSyntax)context.Node;
-
-        // loop through all the attributes on the method
-        foreach (AttributeListSyntax attributeListSyntax in decl.AttributeLists)
-        {
-            foreach (AttributeSyntax attributeSyntax in attributeListSyntax.Attributes)
-            {
-                if (context.SemanticModel.GetSymbolInfo(attributeSyntax).Symbol is not IMethodSymbol attributeSymbol)
-                {
-                    // weird, we couldn't get the symbol, ignore it
-                    continue;
-                }
-
-                INamedTypeSymbol attributeContainingTypeSymbol = attributeSymbol.ContainingType;
-                string fullName = attributeContainingTypeSymbol.ToDisplayString();
-
-                if (fullName == "TextDispatcher.EncoderAttribute")
-                {
-                    if (context.SemanticModel.GetDeclaredSymbol(decl, cancellationToken) is ITypeSymbol typeSymbol)
-                    {
-                        return typeSymbol;
-                    }
-                }
-            }
-        }
-
-        return null;
     }
 
     private void GenerateSymbol(StringBuilder sb, ITypeSymbol s)

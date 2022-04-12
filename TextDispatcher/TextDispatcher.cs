@@ -30,7 +30,7 @@ namespace TextDispatcher
 
         var classDeclarations = context.SyntaxProvider.CreateSyntaxProvider(
            predicate: (s, t) => s is ClassDeclarationSyntax cl && cl.AttributeLists.Count > 0,
-           transform: GetTypeSymbols).Collect();
+           transform: Globals.ClassByAttributeFunc("TextDispatcher.DispatcherAttribute")).Collect();
         
         context.RegisterSourceOutput(classDeclarations, GenerateSource);
     }
@@ -50,41 +50,12 @@ namespace TextDispatcher
 
     }
 
-    private ITypeSymbol GetTypeSymbols(GeneratorSyntaxContext context, CancellationToken cancellationToken)
-    {
-        var decl = (ClassDeclarationSyntax)context.Node;
-
-        // loop through all the attributes on the method
-        foreach (AttributeListSyntax attributeListSyntax in decl.AttributeLists)
-        {
-            foreach (AttributeSyntax attributeSyntax in attributeListSyntax.Attributes)
-            {
-                if (context.SemanticModel.GetSymbolInfo(attributeSyntax).Symbol is not IMethodSymbol attributeSymbol)
-                {
-                    // weird, we couldn't get the symbol, ignore it
-                    continue;
-                }
-
-                INamedTypeSymbol attributeContainingTypeSymbol = attributeSymbol.ContainingType;
-                string fullName = attributeContainingTypeSymbol.ToDisplayString();
-
-                if (fullName == "TextDispatcher.DispatcherAttribute")
-                {
-                    if (context.SemanticModel.GetDeclaredSymbol(decl, cancellationToken) is ITypeSymbol typeSymbol)
-                    {
-                        return typeSymbol;
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
     private void GenerateSymbol(StringBuilder sb, ITypeSymbol s)
     {
         // namespace -> partial class -> function -> switch statement
         using var nsScope = new Scope(sb, $"namespace {s.ContainingNamespace.Name}"); 
         var methods = s.GetMembers().OfType<IMethodSymbol>();
+
         using var clScope = nsScope.NewScope(
             $"{s.DeclaredAccessibility.ToString().ToLowerInvariant()} partial class {s.Name}");
 

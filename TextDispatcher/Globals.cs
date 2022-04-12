@@ -92,4 +92,37 @@ static class Globals
         dfScope.Text($"throw new System.ArgumentException($\"Method '{{arg}}' doesn't exist on this class.\");");
     }
 
+    internal static Func<GeneratorSyntaxContext, CancellationToken, ITypeSymbol>
+        ClassByAttributeFunc(string attributeName) => 
+            (GeneratorSyntaxContext context, CancellationToken cancellationToken) =>
+    {
+        var decl = (ClassDeclarationSyntax)context.Node;
+
+        // loop through all the attributes on the method
+        foreach (AttributeListSyntax attributeListSyntax in decl.AttributeLists)
+        {
+            foreach (AttributeSyntax attributeSyntax in attributeListSyntax.Attributes)
+            {
+                if (context.SemanticModel.GetSymbolInfo(attributeSyntax).Symbol is not IMethodSymbol attributeSymbol)
+                {
+                    // weird, we couldn't get the symbol, ignore it
+                    continue;
+                }
+
+                INamedTypeSymbol attributeContainingTypeSymbol = attributeSymbol.ContainingType;
+                string fullName = attributeContainingTypeSymbol.ToDisplayString();
+
+                if (fullName == attributeName)
+                {
+                    if (context.SemanticModel.GetDeclaredSymbol(decl, cancellationToken) is ITypeSymbol typeSymbol)
+                    {
+                        return typeSymbol;
+                    }
+                }
+            }
+        }
+
+        return null;
+    };
+
 }
