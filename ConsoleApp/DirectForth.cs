@@ -24,6 +24,10 @@ partial class DirectForth
     void deep()     => stack.Push(stack.Count());
     void swap() { var x = stack.Pop(); var y = stack.Pop(); stack.Push(y); stack.Push(x);}
 
+
+    [NoDispatch]
+    void Clear() => stack.Clear();
+
     [NoDispatch]
     void ExecLine(string line) => line.Split(null).ToList().ForEach(Dispatch);
 
@@ -40,17 +44,21 @@ partial class DirectForth
     {
         DirectForth f = new();
 
-        void Assert(string expected, string line) {
-            Write($"{expected,5} == "); f.ExecLine(line); WriteLine();
+        void Report(string expected, string line) {
+            Write($"\t{expected,5} == "); f.ExecLine(line); WriteLine();
         }
-        Assert("100", "50 50 + dup .");
-        Assert("30", "drop 30 60 swap - .");
-        Assert("1", "2 3 % .");
-        Assert("0", "deep .");
+        WriteLine("\nFORTH CAN EXECUTE:");
+        Report("100", "50 50 + dup .");
+        Report("30", "drop 30 60 swap - .");
+        Report("1", "2 3 % .");
+        Report("0", "deep .");
 
+        WriteLine("\nFORTH CAN ENCODE & DECODE:");
+        f.Clear();
         f.ExecLine("50");
         var encoded = f.EncodeLine("dup . .");
         var decoded = f.DecodeTokens(encoded);
+        Write("\t");
         f.ExecLine(decoded);
         WriteLine("== 50 50");
     }

@@ -9,6 +9,7 @@ namespace Tests
         [NoDispatch]
         public static void MainTest()
         {
+            Console.WriteLine("UNIT TESTS:");
             var c = new C();
             c.Dispatch("M");
             c.Dispatch("N");
